@@ -80,3 +80,9 @@ You will primarily work in:
 - Python 3.9+
 - A Gemini API key for LLM features (only needed for modes 1 and 3)
 - No database, no server setup, no external services besides LLM calls
+
+---
+
+## Instructor Notes (Activity Summary)
+
+The core concept here is grounding: an LLM answers better and more safely when it is restricted to retrieved, relevant context instead of freely generating from its full documentation corpus or parameters. Students build this by implementing a tiny inverted index (`build_index`), a word-overlap scorer (`score_document`), and top-k selection (`retrieve`), then comparing naive generation, retrieval-only, and RAG side by side. Students most often struggle with `retrieve`: forgetting to fall back to the full candidate set when no index words match, mis-ordering the sort (ascending vs. descending), or returning scores instead of `(filename, text)` tuples. AI assistance is helpful for scaffolding the inverted-index and tokenization logic and for explaining why exact word overlap under-retrieves synonyms, but it can be misleading if it suggests jumping straight to embeddings/vector search, which defeats the point of the exercise (understanding a simple, transparent baseline first). When guiding a stuck student, ask them to trace one query by hand through `build_index` and `score_document` on paper before touching code, rather than handing them the retrieval implementation directly — this surfaces the logic gap themselves need to close.
