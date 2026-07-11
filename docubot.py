@@ -8,6 +8,7 @@ Core DocuBot class responsible for:
 """
 
 import os
+import re
 import glob
 
 class DocuBot:
@@ -50,22 +51,18 @@ class DocuBot:
 
     def build_index(self, documents):
         """
-        TODO (Phase 1):
         Build a tiny inverted index mapping lowercase words to the documents
         they appear in.
-
-        Example structure:
-        {
-            "token": ["AUTH.md", "API_REFERENCE.md"],
-            "database": ["DATABASE.md"]
-        }
-
-        Keep this simple: split on whitespace, lowercase tokens,
-        ignore punctuation if needed.
         """
         index = {}
-        # TODO: implement simple indexing
-        return index
+        for filename, text in documents:
+            for word in self._tokenize(text):
+                index.setdefault(word, set()).add(filename)
+        return {word: sorted(files) for word, files in index.items()}
+
+    @staticmethod
+    def _tokenize(text):
+        return re.findall(r"[a-z0-9_]+", text.lower())
 
     # -----------------------------------------------------------
     # Scoring and Retrieval (Phase 1)
@@ -73,26 +70,36 @@ class DocuBot:
 
     def score_document(self, query, text):
         """
-        TODO (Phase 1):
         Return a simple relevance score for how well the text matches the query.
-
-        Suggested baseline:
-        - Convert query into lowercase words
-        - Count how many appear in the text
-        - Return the count as the score
         """
-        # TODO: implement scoring
-        return 0
+        query_words = self._tokenize(query)
+        text_words = self._tokenize(text)
+        return sum(text_words.count(word) for word in query_words)
 
     def retrieve(self, query, top_k=3):
         """
-        TODO (Phase 1):
         Use the index and scoring function to select top_k relevant document snippets.
 
         Return a list of (filename, text) sorted by score descending.
         """
-        results = []
-        # TODO: implement retrieval logic
+        query_words = self._tokenize(query)
+
+        candidate_files = set()
+        for word in query_words:
+            candidate_files.update(self.index.get(word, []))
+
+        docs_by_filename = dict(self.documents)
+        candidates = candidate_files if candidate_files else docs_by_filename.keys()
+
+        scored = []
+        for filename in candidates:
+            text = docs_by_filename[filename]
+            score = self.score_document(query, text)
+            if score > 0:
+                scored.append((score, filename, text))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        results = [(filename, text) for _, filename, text in scored]
         return results[:top_k]
 
     # -----------------------------------------------------------
